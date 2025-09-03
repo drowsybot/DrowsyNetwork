@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies
+find_dependency(asio REQUIRED)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/DrowsyNetworkTargets.cmake")
+
+check_required_components(DrowsyNetwork)
