@@ -49,6 +49,9 @@ concept PacketConcept = requires(std::remove_reference_t<T> t) {
         { t.size() } -> std::convertible_to<size_t>;
         { t.data() } -> std::convertible_to<const char*>;
     } || requires(std::remove_reference_t<T> t) {
+        { t.size() } -> std::convertible_to<size_t>;
+        { t.data() } -> std::convertible_to<const uint8_t*>;
+    } || requires(std::remove_reference_t<T> t) {
         { t.GetSize() } -> std::convertible_to<size_t>;
         { t.GetBufferPointer() } -> std::convertible_to<const uint8_t*>;
 };
