@@ -19,4 +19,7 @@ using Strand = asio::strand<T>;
 using Buffer = asio::mutable_buffer;
 using ConstBuffer = asio::const_buffer;
 
+// Standardized size type
+using SizeType = int64_t;
+
 } // namespace DrowsyNetwork
