@@ -40,19 +40,19 @@ private:
 class MessageSocket : public DrowsyNetwork::Socket {
 public:
     MessageSocket(DrowsyNetwork::Executor& IOContext, DrowsyNetwork::TcpSocket&& Socket, ConnectionManager* Manager)
-        : DrowsyNetwork::Socket(IOContext, std::move(Socket)), m_ConnectionManager(Manager) {}
+        : DrowsyNetwork::Socket(IOContext, std::move(Socket)), m_ConnectionManager(Manager), m_LastPacketSize(0) {}
 
 protected:
     void HandleWrite() override {
         if (!IsActive() || m_WriteQueue.empty()) return;
 
         auto& Packet = m_WriteQueue.front();
-        auto Size = static_cast<DrowsyNetwork::SizeType>(Packet->size());
+        m_LastPacketSize = Packet->size(); // Gimmick to make sure the data is valid until write finishes
 
         // Send Size prefix + data in one atomic write
         asio::async_write(m_Socket,
             std::vector<DrowsyNetwork::ConstBuffer>{
-                asio::buffer(&Size, sizeof(Size)),
+                asio::buffer(&m_LastPacketSize, sizeof(m_LastPacketSize)),
                 asio::buffer(Packet->data(), Packet->size())
             },
             asio::bind_executor(m_Strand, [self = weak_from_this()](asio::error_code ErrorCode, std::size_t BytesTransferred) {
@@ -120,6 +120,7 @@ protected:
 
 private:
     ConnectionManager* m_ConnectionManager;
+    DrowsyNetwork::SizeType m_LastPacketSize;
 };
 
 class MessageServer : public DrowsyNetwork::Server {
