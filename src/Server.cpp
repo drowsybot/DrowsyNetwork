@@ -4,9 +4,9 @@
 
 namespace DrowsyNetwork {
 
-Server::Server(Executor& IoContext) :
-    m_IoContext(IoContext),
-    m_Resolver(IoContext)
+Server::Server(Executor& IOContext) :
+    m_IoContext(IOContext),
+    m_Resolver(IOContext)
 {
 }
 

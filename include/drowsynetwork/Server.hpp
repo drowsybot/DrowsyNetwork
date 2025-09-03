@@ -35,12 +35,12 @@ public:
 
     /**
      * @brief Construct server with an I/O context
-     * @param IoContext The ASIO I/O context to use for all operations
+     * @param IOContext The ASIO I/O context to use for all operations
      *
      * The I/O context must remain alive for the lifetime of the server.
      * All async operations will be executed on this context's thread(s).
      */
-    explicit Server(Executor& IoContext);
+    explicit Server(Executor& IOContext);
 
     /**
      * @brief Virtual destructor - properly closes all acceptors
