@@ -9,7 +9,6 @@
 #include <atomic>
 
 namespace DrowsyNetwork {
-
 /**
  * @brief Represents a single TCP connection
  *
@@ -316,3 +315,4 @@ public:
     asio::streambuf m_ReadBuffer;       ///< Buffer for incoming data
     bool m_IsWriting;                   ///< Flag to prevent overlapping writes
 };
+} // namespace DrowsyNetwork

@@ -1,7 +1,5 @@
 #include <memory>
-
 #include "drowsynetwork/Server.hpp"
-
 #include "drowsynetwork/Logging.hpp"
 
 namespace DrowsyNetwork {
