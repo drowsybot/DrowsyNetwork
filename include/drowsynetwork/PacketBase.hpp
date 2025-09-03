@@ -64,6 +64,8 @@ private:
 };
 
 // Type alias for cleaner usage
+using IPacketBasePtr = std::shared_ptr<IPacketBase>;
+
 template<PacketConcept T>
 using PacketPtr = std::shared_ptr<PacketBase<T>>;
 } // namespace DrowsyNetwork

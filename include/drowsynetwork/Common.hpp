@@ -9,8 +9,8 @@ using Executor = asio::io_context;
 using ExecutorType = Executor::executor_type;
 using TcpSocket = asio::ip::tcp::socket;
 using TcpAcceptor = asio::ip::tcp::acceptor;
+using TcpResolver = asio::ip::tcp::resolver;
 using TcpEndpoint = asio::ip::tcp::endpoint;
-using ErrorCode = asio::error_code;
 
 template<typename T>
 using Strand = asio::strand<T>;

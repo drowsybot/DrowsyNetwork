@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.hpp"
-#include "PacketBase.h"
+#include "PacketBase.hpp"
 #include "Logging.hpp"
 #include <queue>
 #include <memory>
@@ -10,38 +10,25 @@
 
 namespace DrowsyNetwork {
 
-struct QueuedPacket {
-    std::shared_ptr<IPacketBase> Packet;
-    SizeType Size;
-};
-
 class Socket : public std::enable_shared_from_this<Socket> {
-private:
-    static std::atomic<uint64_t> s_NextId;
-    uint64_t m_Id;
-
 public:
     Socket() = delete;
-    explicit Socket(Executor& io_context, TcpSocket&& socket);
+    explicit Socket(Executor& IOContext, TcpSocket&& Socket);
     virtual ~Socket() = default;
 
-    uint64_t GetId() const { return m_Id; }
-
     TcpSocket& GetSocket();
+    uint64_t GetId() const { return m_Id; }
 
     // Taking a const reference to avoid uselessly incrementing the ref count
     // if answering from within the strand thread
     template <PacketConcept T>
-    void Send(const PacketPtr<T>& packet) {
-        if (!IsActive())
-            return;
-
+    void Send(const PacketPtr<T>& Packet) {
         if (m_Strand.running_in_this_thread()) {
-            EnqueueSend(packet);
+            EnqueueSend(Packet);
         } else {
-            asio::post(m_Strand, [self = weak_from_this(), packet = packet]() {
+            asio::post(m_Strand, [self = weak_from_this(), Packet = Packet]() {
                 if (auto socket = self.lock()) {
-                    socket->EnqueueSend(packet);
+                    socket->EnqueueSend(Packet);
                 } else {
                     // Handle invalid socket
                     LOG_ERROR("Invalid socket at send");
@@ -53,17 +40,18 @@ public:
     // To be called after accepting the connection
     virtual void Setup();
 
+    // State management
+    void Disconnect();
+
+    bool IsActive() const;
+
 protected:
     template <PacketConcept T>
-    void EnqueueSend(const PacketPtr<T>& packet) {
+    void EnqueueSend(const PacketPtr<T>& Packet) {
         if (!IsActive())
             return;
 
-        QueuedPacket queuedInstance;
-        queuedInstance.Packet = packet;
-        queuedInstance.Size = packet->size();
-
-        m_WriteQueue.push_back(queuedInstance);
+        m_WriteQueue.push_back(Packet);
 
         if (!m_IsWriting) {
             m_IsWriting = true;
@@ -71,29 +59,33 @@ protected:
         }
     }
 
+    virtual void HandleDisconnect();
+
     virtual void HandleWrite();
-    void FinishWrite(asio::error_code error, std::size_t bytes_transferred);
+    virtual void FinishWrite(asio::error_code ErrorCode, std::size_t BytesTransferred);
 
     virtual void HandleRead();
-    virtual void FinishRead(asio::error_code error, std::size_t bytes_transferred);
+    virtual void FinishRead(asio::error_code ErrorCode, std::size_t BytesTransferred);
 
     // Process received data
-    virtual void OnRead(const uint8_t* data, size_t size) {};
+    virtual void OnRead(const uint8_t* Data, size_t Size) = 0;
 
     // State management
-    void SetActiveStatus(bool ActiveStatus);
-    bool IsActive() const;
+    virtual void SetActive(bool ActiveStatus);
+
+    virtual void OnDisconnect() = 0;
 
     // Error handling
-    static bool IsFatalError(const asio::error_code& errorCode);
+    static bool IsFatalError(const asio::error_code& ErrorCode);
 
 public:
     Strand<ExecutorType> m_Strand;
     TcpSocket m_Socket;
-    std::deque<QueuedPacket> m_WriteQueue;
+    uint64_t m_Id;
+    bool m_IsActive;
+    std::deque<IPacketBasePtr> m_WriteQueue;
     asio::streambuf m_ReadBuffer;
     bool m_IsWriting;
-    bool m_IsActive;
 };
 
 } // namespace DrowsyNetwork
