@@ -26,22 +26,6 @@ void Socket::Setup() {
     });
 }
 
-// It is the duty of the developer to guarantee that the data
-// remains valid until writing ends.
-
-/*void Socket::Send(const uint8_t* data, size_t size) {
-    auto DataSpan = std::span<const uint8_t>(data, size);
-    asio::post(m_Strand, [this, DataSpan = DataSpan]() mutable {
-        bool IsSending = !m_WriteQueue.empty();
-
-        std::println("Sending {} bytes", DataSpan.size());
-        m_WriteQueue.push_back(DataSpan);
-
-        if (!IsSending)
-            DoWrite();
-    });
-}*/
-
 void Socket::HandleWrite() {
     if (!IsActive() || m_WriteQueue.empty())
         return;
@@ -71,7 +55,6 @@ void Socket::FinishWrite(asio::error_code error, std::size_t bytes_transferred) 
         }
     }
 
-    //std::println("Sent {} bytes", bytes_transferred);
     auto& instance = m_WriteQueue.front();
     LOG_DEBUG("Socket {} sent {} bytes, remaining {} ref count", m_Id, instance.Size, instance.Packet.use_count());
     m_WriteQueue.pop_front();
