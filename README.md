@@ -83,10 +83,9 @@ The `Server` class handles accepting incoming connections. You inherit from it a
 
 ### Socket
 The `Socket` class represents individual client connections. It provides:
-- Automatic connection management
 - Thread-safe sending with strand-based synchronization
 - Configurable packet handling
-- Built-in error handling and reconnection logic
+- Built-in error handling
 
 ### PacketBase
 A flexible packet system that works with any data type that satisfies the `PacketConcept`. Works with:
@@ -100,7 +99,6 @@ The `examples/` directory contains several complete examples:
 
 - **Echo Server**: Simple server that echoes back received data
 - **Message Server**: More advanced server with message framing and broadcasting
-- **Custom Packet Types**: Demonstrates using custom data structures
 
 Run any example:
 ```bash
@@ -157,14 +155,12 @@ target_link_libraries(your_target PRIVATE DrowsyNetwork::DrowsyNetwork)
 DrowsyNetwork is designed to be thread-safe:
 - Each socket runs on its own strand to prevent data races
 - The `Send()` method can be called from any thread
-- Connection management is internally synchronized
 
 ## Performance 🏃‍♂️
 
 - **Zero-copy** where possible
 - **Efficient memory management** with shared_ptr for packets
 - **Strand-based concurrency** eliminates most locking overhead
-- **Batch operations** for multiple concurrent connections
 
 ## Contributing 🤝
 
