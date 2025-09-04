@@ -87,11 +87,11 @@ void Server::Listen(size_t Index) {
     auto Socket = std::make_unique<TcpSocket>(m_IoContext);
     Acceptor->async_accept(*Socket,
     [this, Socket = std::move(Socket), Index](asio::error_code ErrorCode) mutable {
-            Accept(Index, std::move(*Socket), ErrorCode);
+            Accept(Index, std::move(Socket), ErrorCode);
         });
 }
 
-void Server::Accept(size_t Index, TcpSocket&& Socket, asio::error_code ErrorCode) {
+void Server::Accept(size_t Index, std::unique_ptr<TcpSocket>&& Socket, asio::error_code ErrorCode) {
     if (!ErrorCode) {
         LOG_DEBUG("Accepting socket from acceptor: {}", Index);
         OnAccept(std::move(Socket));

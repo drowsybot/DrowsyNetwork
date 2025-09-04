@@ -59,7 +59,7 @@ public:
      * The socket should already be connected (usually from Server::OnAccept).
      * Each socket gets a unique ID for logging and identification.
      */
-    explicit Socket(Executor& IOContext, TcpSocket&& Socket);
+    explicit Socket(Executor& IOContext, std::unique_ptr<TcpSocket>&& Socket);
 
     /**
      * @brief Virtual destructor for proper cleanup
@@ -76,7 +76,7 @@ public:
      * Use this when you need direct access to socket options or
      * properties like remote endpoint address.
      */
-    TcpSocket& GetSocket();
+    TcpSocket* GetSocket() const;
 
     /**
      * @brief Get unique socket identifier
@@ -132,7 +132,7 @@ public:
      *
      * Always call this in your Server::OnAccept implementation:
      * @code
-     * void OnAccept(TcpSocket&& socket) override {
+     * void OnAccept(std::unique_ptr<TcpSocket>&& socket) override {
      *     auto client = std::make_shared<MySocket>(m_IoContext, std::move(socket));
      *     client->Setup();  // Don't forget this!
      * }
@@ -308,7 +308,7 @@ protected:
 
 public:
     Strand<ExecutorType> m_Strand;      ///< Strand for thread-safe operations
-    TcpSocket m_Socket;                 ///< The underlying ASIO socket
+    std::unique_ptr<TcpSocket> m_Socket;    ///< The underlying ASIO socket
     uint64_t m_Id;                      ///< Unique socket identifier
     bool m_IsActive;                    ///< Current connection status
     std::deque<IPacketBasePtr> m_WriteQueue; ///< Outgoing packet queue

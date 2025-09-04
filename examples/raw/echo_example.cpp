@@ -24,7 +24,7 @@ private:
 
 class EchoSocket : public DrowsyNetwork::Socket {
 public:
-    EchoSocket(DrowsyNetwork::Executor& ioContext, DrowsyNetwork::TcpSocket&& socket, ConnectionManager* manager)
+    EchoSocket(DrowsyNetwork::Executor& ioContext, std::unique_ptr<DrowsyNetwork::TcpSocket>&& socket, ConnectionManager* manager)
         : Socket(ioContext, std::move(socket)), m_manager(manager) {}
 
 protected:
@@ -49,7 +49,7 @@ public:
         : Server(ioContext), m_manager(manager) {}
 
 private:
-    void OnAccept(DrowsyNetwork::TcpSocket&& socket) override {
+    void OnAccept(std::unique_ptr<DrowsyNetwork::TcpSocket>&& socket) override {
         auto echoSocket = std::make_shared<EchoSocket>(m_IoContext, std::move(socket), m_manager);
         echoSocket->Setup();
 

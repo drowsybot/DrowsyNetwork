@@ -2,7 +2,7 @@
 
 namespace DrowsyNetwork {
 
-Socket::Socket(Executor& IOContext, TcpSocket&& Socket) :
+Socket::Socket(Executor& IOContext, std::unique_ptr<TcpSocket>&& Socket) :
     m_Strand(IOContext.get_executor()),
     m_Socket(std::move(Socket)),
     m_IsWriting(false),
@@ -13,8 +13,8 @@ Socket::Socket(Executor& IOContext, TcpSocket&& Socket) :
     LOG_DEBUG("Socket {} created", m_Id);
 }
 
-TcpSocket& Socket::GetSocket() {
-    return m_Socket;
+TcpSocket* Socket::GetSocket() const {
+    return m_Socket.get();
 }
 
 void Socket::Setup() {
@@ -32,7 +32,7 @@ void Socket::HandleWrite() {
 
     auto& Instance = m_WriteQueue.front();
 
-    asio::async_write(m_Socket, asio::buffer(Instance->data(), Instance->size()),
+    asio::async_write(*m_Socket, asio::buffer(Instance->data(), Instance->size()),
         asio::bind_executor(m_Strand, [self = weak_from_this()](asio::error_code ErrorCode, std::size_t BytesTransferred) {
             if (auto Socket = self.lock()) {
                 Socket->FinishWrite(ErrorCode, BytesTransferred);
@@ -65,7 +65,7 @@ void Socket::FinishWrite(asio::error_code ErrorCode, std::size_t BytesTransferre
 }
 
 void Socket::HandleRead() {
-    asio::async_read(m_Socket, m_ReadBuffer, asio::transfer_at_least(1),
+    asio::async_read(*m_Socket, m_ReadBuffer, asio::transfer_at_least(1),
         asio::bind_executor(m_Strand,
         [self = weak_from_this()](asio::error_code ErrorCode, std::size_t BytesTransferred) {
             if (auto socket = self.lock()) {
@@ -110,14 +110,14 @@ void Socket::Disconnect() {
 }
 
 void Socket::HandleDisconnect() {
-    if (m_Socket.is_open()) {
+    if (m_Socket->is_open()) {
         asio::error_code ErrorCode;
-        m_Socket.shutdown(asio::socket_base::shutdown_both, ErrorCode);
+        m_Socket->shutdown(asio::socket_base::shutdown_both, ErrorCode);
         if (ErrorCode && ErrorCode != asio::error::not_connected) {
             LOG_ERROR("Socket {} disconnect (shutdown): {}", m_Id, ErrorCode.message());
         }
 
-        m_Socket.close(ErrorCode);
+        m_Socket->close(ErrorCode);
         if (ErrorCode && ErrorCode != asio::error::not_connected) {
             LOG_ERROR("Socket {} disconnect (close): {}", m_Id, ErrorCode.message());
         }

@@ -21,7 +21,7 @@ namespace DrowsyNetwork {
  *     MyServer(asio::io_context& io) : Server(io) {}
  *
  * protected:
- *     void OnAccept(TcpSocket&& socket) override {
+ *     void OnAccept(std::unique_ptr<TcpSocket>&& socket) override {
  *         auto client = std::make_shared<MySocket>(m_IoContext, std::move(socket));
  *         client->Setup();
  *         m_clients.push_back(client);
@@ -127,14 +127,14 @@ protected:
     /**
      * @brief Handle an accepted connection
      * @param Index Index of the acceptor that accepted the connection
-     * @param Socket The new client socket (moved)
+     * @param Socket The new client socket (unique pointer)
      * @param ErrorCode Any error that occurred during accept
      *
      * This method logs the connection and calls your OnAccept() handler.
      * After handling the connection, it automatically starts listening
      * for the next connection.
      */
-    void Accept(size_t Index, TcpSocket&& Socket, asio::error_code ErrorCode);
+    void Accept(size_t Index, std::unique_ptr<TcpSocket>&& Socket, asio::error_code ErrorCode);
 
     /**
      * @brief Safely close an acceptor
@@ -154,13 +154,13 @@ protected:
      *
      * Example:
      * @code
-     * void OnAccept(TcpSocket&& socket) override {
+     * void OnAccept(std::unique_ptr<TcpSocket>&& socket) override {
      *     auto client = std::make_shared<MySocket>(m_IoContext, std::move(socket));
      *     client->Setup();  // Important! This starts the read loop
      * }
      * @endcode
      */
-    virtual void OnAccept(TcpSocket&& Socket) = 0;
+    virtual void OnAccept(std::unique_ptr<TcpSocket>&& Socket) = 0;
 
 protected:
     Executor& m_IoContext;           ///< Reference to the I/O context

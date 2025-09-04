@@ -39,7 +39,7 @@ private:
 
 class MessageSocket : public DrowsyNetwork::Socket {
 public:
-    MessageSocket(DrowsyNetwork::Executor& IOContext, DrowsyNetwork::TcpSocket&& Socket, ConnectionManager* Manager)
+    MessageSocket(DrowsyNetwork::Executor& IOContext, std::unique_ptr<DrowsyNetwork::TcpSocket>&& Socket, ConnectionManager* Manager)
         : DrowsyNetwork::Socket(IOContext, std::move(Socket)), m_ConnectionManager(Manager), m_LastPacketSize(0) {}
 
 protected:
@@ -50,7 +50,7 @@ protected:
         m_LastPacketSize = Packet->size(); // Gimmick to make sure the data is valid until write finishes
 
         // Send Size prefix + data in one atomic write
-        asio::async_write(m_Socket,
+        asio::async_write(*m_Socket,
             std::vector<DrowsyNetwork::ConstBuffer>{
                 asio::buffer(&m_LastPacketSize, sizeof(m_LastPacketSize)),
                 asio::buffer(Packet->data(), Packet->size())
@@ -65,7 +65,7 @@ protected:
 
     void HandleRead() override {
         // Read Size prefix first
-        asio::async_read(m_Socket, m_ReadBuffer, asio::transfer_exactly(sizeof(DrowsyNetwork::SizeType)),
+        asio::async_read(*m_Socket, m_ReadBuffer, asio::transfer_exactly(sizeof(DrowsyNetwork::SizeType)),
             asio::bind_executor(m_Strand, [self = weak_from_this()](asio::error_code ErrorCode, std::size_t BytesTransferred) {
                 if (auto Socket = std::static_pointer_cast<MessageSocket>(self.lock())) {
                     Socket->ReadSize(ErrorCode, BytesTransferred);
@@ -94,7 +94,7 @@ protected:
         m_ReadBuffer.consume(BytesTransferred);
 
         // Read the actual message
-        asio::async_read(m_Socket, m_ReadBuffer, asio::transfer_exactly(MessageSize),
+        asio::async_read(*m_Socket, m_ReadBuffer, asio::transfer_exactly(MessageSize),
             asio::bind_executor(m_Strand, [self = weak_from_this()](asio::error_code ErrorCode, size_t BytesTransferred) {
                 if (auto Socket = std::static_pointer_cast<MessageSocket>(self.lock())) {
                     Socket->FinishRead(ErrorCode, BytesTransferred);
@@ -129,7 +129,7 @@ public:
         : Server(IOContext), m_ConnectionManager(Manager) {}
 
 private:
-    void OnAccept(DrowsyNetwork::TcpSocket&& Socket) override {
+    void OnAccept(std::unique_ptr<DrowsyNetwork::TcpSocket>&& Socket) override {
         auto NewSocket = std::make_shared<MessageSocket>(m_IoContext, std::move(Socket), m_ConnectionManager);
         NewSocket->Setup();
         m_ConnectionManager->OnConnect(std::move(NewSocket));
