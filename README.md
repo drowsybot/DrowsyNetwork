@@ -54,7 +54,7 @@ public:
     EchoServer(asio::io_context& ioContext) : Server(ioContext) {}
 
 private:
-    void OnAccept(DrowsyNetwork::TcpSocket&& socket) override {
+    void OnAccept(std::unique_ptr<DrowsyNetwork::TcpSocket>&& socket) override {
         auto client = std::make_shared<EchoSocket>(m_IoContext, std::move(socket));
         client->Setup();
     }
