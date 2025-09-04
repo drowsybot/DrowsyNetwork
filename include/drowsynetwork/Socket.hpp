@@ -67,7 +67,7 @@ public:
      * Automatically handles disconnection and cleanup if the socket
      * is still active when destroyed.
      */
-    virtual ~Socket() = default;
+    virtual ~Socket();
 
     /**
      * @brief Get reference to the underlying TCP socket

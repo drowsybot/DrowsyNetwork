@@ -13,6 +13,13 @@ Socket::Socket(Executor& IOContext, std::unique_ptr<TcpSocket>&& Socket) :
     LOG_DEBUG("Socket {} created", m_Id);
 }
 
+Socket::~Socket() {
+    // asio sockets will clean after themselves when they go out of scope but let's show intent
+    Socket::HandleDisconnect(); // Make sure we properly clean the resources
+
+    LOG_DEBUG("Socket {} destroyed", m_Id);
+}
+
 TcpSocket* Socket::GetSocket() const {
     return m_Socket.get();
 }
